@@ -165,17 +165,19 @@ export const CheckoutLineSchema = z.object({
   quantity: z.number().int().positive(),
 });
 
-export const CreateCheckoutRequestSchema = z.object({
-  currency: CurrencyCode,
-  lines: z.array(CheckoutLineSchema).min(1),
-  customer: z
-    .object({
-      email: z.string().email().optional(),
-    })
-    .strict()
-    .optional(),
-  idempotencyKey: z.string().min(1),
-});
+export const CreateCheckoutRequestSchema = z
+  .object({
+    currency: CurrencyCode,
+    lines: z.array(CheckoutLineSchema).min(1),
+    customer: z
+      .object({
+        email: z.string().email().optional(),
+      })
+      .strict()
+      .optional(),
+    idempotencyKey: z.string().min(1),
+  })
+  .strict();
 
 export const CheckoutTotalsSchema = z.object({
   subtotal: MoneySchema,
