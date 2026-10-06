@@ -16,8 +16,10 @@
     "clean": "rimraf dist coverage .turbo"
   },
   "dependencies": {
+    "@surakuri/cart": "workspace:*",
     "@surakuri/catalog": "workspace:*",
     "@surakuri/contracts": "workspace:*",
+    "@surakuri/reservation": "workspace:*",
     "fastify": "^5.0.0",
     "zod": "^3.24.1"
   },
