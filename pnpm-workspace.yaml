@@ -10,3 +10,5 @@ packages:
 #   esbuild — downloads/links its platform binary; vitest and Astro need it.
 allowBuilds:
   esbuild: true
+  # sharp — downloads its platform binary; Astro needs it for image optimization.
+  sharp: true

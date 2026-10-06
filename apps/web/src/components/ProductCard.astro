@@ -1,0 +1,35 @@
+---
+/**
+ * Product card, rebuilt for restraint: brand, model, reference,
+ * price, availability. No badges, no ratings, no hover actions,
+ * no animation library — reveal is handled by the grid's
+ * `data-reveal` via motion primitives.
+ */
+import { format } from "@surakuri/money";
+import { AVAILABILITY_LABEL } from "../content.js";
+import type { ShowcaseProduct } from "../content.js";
+
+interface Props {
+  product: ShowcaseProduct;
+}
+
+const { product } = Astro.props;
+const price = format({ amountMinor: product.priceMinor, currency: product.currency });
+---
+
+<article class="group border-b border-line pb-8" data-reveal>
+  <div class="flex aspect-[3/4] items-center justify-center bg-surface">
+    <span class="font-display text-5xl text-line" aria-hidden="true">
+      {product.brand.charAt(0)}
+    </span>
+  </div>
+  <div class="space-y-1 pt-4">
+    <p class="text-[10px] uppercase tracking-[0.2em] text-muted">{product.brand}</p>
+    <h3 class="text-sm font-medium">{product.model}</h3>
+    <p class="font-mono text-xs text-muted">Ref. {product.reference}</p>
+    <div class="flex items-baseline justify-between pt-1">
+      <p class="text-sm font-medium">{price}</p>
+      <p class="text-xs text-muted">{AVAILABILITY_LABEL[product.availability]}</p>
+    </div>
+  </div>
+</article>
