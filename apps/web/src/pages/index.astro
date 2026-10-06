@@ -1,0 +1,47 @@
+---
+/**
+ * Homepage: typographic hero (zero image bytes — photography lands
+ * with real responsive AVIF/WebP assets per the image strategy, never
+ * as a multi-megabyte JPEG), showcase grid, assurance strip.
+ */
+import Layout from "../layouts/Layout.astro";
+import ProductCard from "../components/ProductCard.astro";
+import { SHOWCASE } from "../content.js";
+---
+
+<Layout
+  title="Rare & Certified Luxury Watches"
+  description="SURAKURI — certified pre-owned and unworn luxury watches with documented provenance and insured delivery."
+>
+  <section class="mx-auto w-full max-w-6xl px-4 pb-16 pt-16 sm:px-6 md:pt-24">
+    <p class="text-[11px] uppercase tracking-[0.25em] text-muted" data-reveal>
+      Certified · Documented · Insured
+    </p>
+    <h1 class="max-w-3xl pt-4 font-display text-display" data-reveal>
+      Timepieces worth keeping.
+    </h1>
+    <p class="max-w-xl pt-4 text-body text-muted" data-reveal>
+      A small, deliberate collection of exceptional watches — each
+      authenticated in-house and delivered with its full story.
+    </p>
+    <a
+      href="#collection"
+      class="mt-8 inline-flex min-h-[44px] items-center bg-ink px-8 text-[11px] uppercase tracking-[0.2em] text-paper"
+      data-reveal
+    >
+      View the collection
+    </a>
+  </section>
+
+  <section id="collection" class="mx-auto w-full max-w-6xl scroll-mt-8 px-4 pb-20 sm:px-6">
+    <h2 class="pb-8 font-display text-h2" data-reveal>The collection</h2>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" data-stagger style="--sr-stagger: 80ms;">
+      {SHOWCASE.map((product) => <ProductCard product={product} />)}
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import { observeReveals } from "@surakuri/motion";
+  observeReveals(document);
+</script>

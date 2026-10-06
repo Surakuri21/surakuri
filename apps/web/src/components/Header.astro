@@ -1,0 +1,109 @@
+---
+/**
+ * Site header: wordmark, desktop nav, mobile drawer.
+ *
+ * The drawer uses motion primitives (`sr-drawer` + `sr-overlay`,
+ * transform/opacity only) with no animation library. Escape closes
+ * the panel and returns focus to the trigger; the trigger exposes
+ * `aria-expanded` / `aria-controls` for screen readers.
+ */
+const NAV = [
+  { href: "/shop", label: "Shop" },
+  { href: "/collections", label: "Collections" },
+  { href: "/about", label: "About" },
+];
+---
+
+<header class="bg-ink text-paper">
+  <div class="mx-auto flex min-h-[64px] w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+    <a href="/" class="font-display text-xl tracking-[0.25em] uppercase" aria-label="SURAKURI home">
+      Surakuri
+    </a>
+    <nav class="hidden items-center gap-8 md:flex" aria-label="Primary">
+      {
+        NAV.map((item) => (
+          <a
+            href={item.href}
+            class="py-3 text-[11px] tracking-[0.2em] uppercase opacity-80 transition-opacity hover:opacity-100"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+    <button
+      id="menu-trigger"
+      type="button"
+      class="flex min-h-[44px] min-w-[44px] items-center justify-center md:hidden"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label="Open menu"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M2 5h16M2 10h16M2 15h16" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div id="menu-overlay" class="sr-overlay fixed inset-0 z-40 bg-ink/40" data-open="false" aria-hidden="true"></div>
+<aside
+  id="mobile-menu"
+  class="sr-drawer fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-paper text-ink"
+  data-open="false"
+  aria-label="Menu"
+>
+  <div class="flex min-h-[64px] items-center justify-between px-4">
+    <span class="font-display text-lg tracking-[0.25em] uppercase">Surakuri</span>
+    <button
+      id="menu-close"
+      type="button"
+      class="flex min-h-[44px] min-w-[44px] items-center justify-center"
+      aria-label="Close menu"
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+  </div>
+  <nav class="flex flex-col px-4 pb-8" aria-label="Mobile">
+    {
+      NAV.map((item) => (
+        <a
+          href={item.href}
+          class="border-b border-line py-4 text-sm tracking-[0.15em] uppercase"
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+</aside>
+
+<script>
+  const trigger = document.getElementById("menu-trigger");
+  const close = document.getElementById("menu-close");
+  const menu = document.getElementById("mobile-menu");
+  const overlay = document.getElementById("menu-overlay");
+
+  function setOpen(open: boolean): void {
+    menu?.setAttribute("data-open", String(open));
+    overlay?.setAttribute("data-open", String(open));
+    trigger?.setAttribute("aria-expanded", String(open));
+    trigger?.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    if (open) {
+      (close as HTMLButtonElement | null)?.focus();
+    } else {
+      (trigger as HTMLButtonElement | null)?.focus();
+    }
+  }
+
+  trigger?.addEventListener("click", () => setOpen(true));
+  close?.addEventListener("click", () => setOpen(false));
+  overlay?.addEventListener("click", () => setOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu?.getAttribute("data-open") === "true") {
+      setOpen(false);
+    }
+  });
+</script>

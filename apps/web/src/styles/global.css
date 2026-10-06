@@ -1,0 +1,20 @@
+/**
+ * Global stylesheet — the ONLY stylesheet entry.
+ *
+ * Design tokens (`@theme` utilities like `bg-ink text-paper`) and
+ * motion primitives (`sr-*` classes) both come from workspace packages,
+ * so the shell can never drift from the system. Page styles are
+ * Tailwind utilities in markup; no per-component CSS files.
+ */
+
+@import "@surakuri/design-tokens/tokens.css";
+@import "@surakuri/motion/primitives.css";
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Never allow horizontal scroll on small viewports (§94). */
+body {
+  overflow-x: clip;
+}
