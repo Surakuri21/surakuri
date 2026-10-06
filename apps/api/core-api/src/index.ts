@@ -1,6 +1,10 @@
 import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
-import { registerProductRoutes, unavailableSource } from "./products.js";
+import {
+  registerProductRoutes,
+  unavailableSource,
+} from "./products.js";
+import { liveSupabaseSource } from "./supabase-catalog.js";
 import { registerReservationRoutes } from "./reservations.js";
 import { createMemoryStore } from "@surakuri/reservation";
 import { registerCartRoutes } from "./cart.js";
@@ -12,7 +16,18 @@ function notWired(name: string): Promise<never> {
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
   const server = buildServer();
-  registerProductRoutes(server, unavailableSource());
+  // Catalog reads: live Supabase when credentials are present,
+  // otherwise fail closed with 503 (never an empty fake list).
+  const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  registerProductRoutes(
+    server,
+    serviceKey !== undefined
+      ? liveSupabaseSource({
+          url: config.SUPABASE_URL,
+          serviceRoleKey: serviceKey,
+        })
+      : unavailableSource(),
+  );
   // Dev-only single-process store: lost on restart, uncoordinated across
   // instances. Production uses Postgres (guard logic is unchanged).
   registerReservationRoutes(server, {
