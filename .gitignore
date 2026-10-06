@@ -65,3 +65,13 @@ supabase/.env.*
 secrets.json
 credentials.json
 service-account*.json
+
+# ─── Project memory / source of truth ───────────────────────────────────
+# Lives in KOS Command Center, NEVER in this repo. Agents must read it
+# in place (read-only) and must not recreate copies here.
+decisions.md
+DECISIONS.md
+memory.md
+MEMORY.md
+handoff.md
+HANDOFF.md
