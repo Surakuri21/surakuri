@@ -1,0 +1,26 @@
+{
+  "name": "@surakuri/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API contracts for SURAKURI: Zod schemas + OpenAPI skeleton. Source of truth for what the client and server both agree on.",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test": "vitest run",
+    "clean": "rimraf dist coverage .turbo"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/punycode": "^2.0.74",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

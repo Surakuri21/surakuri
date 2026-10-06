@@ -1,0 +1,1 @@
+feat(contracts): zod schemas + openapi skeleton (catalog checkout auth)
