@@ -43,6 +43,11 @@ desktop.ini
 .temp/
 tmp/
 
+# ─── Out-of-band notes (never publish) ──────────────────────────────────────
+# Security write-ups that describe live, unfixed exposure details are kept
+# locally, not in the repository. See docs/runbooks/rb-0001 for the pointer.
+.local-notes/
+
 # ─── Supabase local development state ───────────────────────────────────────
 # Keep migrations; never commit local DB dumps or linked project state.
 supabase/.branches/
