@@ -1,0 +1,62 @@
+# ─── Secrets ────────────────────────────────────────────────────────────────
+# Never commit real credentials. Only .env.example belongs in the repo.
+.env
+.env.*
+!.env.example
+
+# ─── Node ───────────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.npm/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ─── Build output ───────────────────────────────────────────────────────────
+dist/
+build/
+out/
+.astro/
+.turbo/
+.vite/
+*.tsbuildinfo
+
+# ─── Test output ────────────────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# ─── Editor / OS ────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Local tooling ──────────────────────────────────────────────────────────
+*.local
+.cache/
+.temp/
+tmp/
+
+# ─── Supabase local development state ───────────────────────────────────────
+# Keep migrations; never commit local DB dumps or linked project state.
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.*
+!supabase/.env.example
+
+# ─── Safety net ─────────────────────────────────────────────────────────────
+# Block credential-shaped files even if someone renames them.
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+service-account*.json

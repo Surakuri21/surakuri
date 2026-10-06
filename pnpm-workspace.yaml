@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "apps/api/*"
+  - "packages/*"
+
+# pnpm blocks dependency build scripts by default (supply-chain safety).
+# Only allow what is genuinely required, named explicitly. Add an entry here
+# only after understanding why that package runs a build script.
+#
+#   esbuild — downloads/links its platform binary; vitest and Astro need it.
+allowBuilds:
+  esbuild: true

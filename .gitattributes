@@ -1,0 +1,20 @@
+# Normalise line endings so Windows and Unix checkouts produce identical diffs.
+# Without this, CRLF/LF churn pollutes every commit and review.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+
+# Lockfile is generated; keep it out of diff noise and merge conflicts.
+pnpm-lock.yaml -diff merge=ours
