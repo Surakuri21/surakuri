@@ -190,6 +190,9 @@ importers:
 
   apps/api/core-api:
     dependencies:
+      '@surakuri/catalog':
+        specifier: workspace:*
+        version: link:../../../packages/catalog
       '@surakuri/contracts':
         specifier: workspace:*
         version: link:../../../packages/contracts
@@ -267,6 +270,25 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
 
+  packages/catalog:
+    dependencies:
+      '@surakuri/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@surakuri/ims-adapter':
+        specifier: workspace:*
+        version: link:../../apps/api/ims-adapter
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
+
   packages/contracts:
     dependencies:
       zod:
@@ -309,6 +331,15 @@ importers:
       '@surakuri/design-tokens':
         specifier: workspace:*
         version: link:../design-tokens
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
+
+  packages/search:
     devDependencies:
       typescript:
         specifier: ^5.7.2
