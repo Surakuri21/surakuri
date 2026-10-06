@@ -1,0 +1,145 @@
+/**
+ * SURAKURI motion primitives (CSS half).
+ *
+ * Import once alongside tokens:
+ *   @import "@surakuri/design-tokens/tokens.css";
+ *   @import "@surakuri/motion/primitives.css";
+ *
+ * Contract:
+ * - transform + opacity ONLY (no width/height/top/left).
+ * - Durations mirror design tokens: quick 180 / base 240 / panel 320.
+ * - Every variant has a reduced-motion answer (appears instantly).
+ * - Scroll reveal: `[data-reveal]` starts hidden; JS adds
+ *   `.is-visible` via `observeReveals()`. No-JS still shows
+ *   content (see noscript fallback at the bottom).
+ */
+
+.sr-fade {
+  opacity: 0;
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-fade.is-visible,
+.sr-fade[data-open="true"] {
+  opacity: 1;
+}
+
+.sr-fade-up {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sr-scale {
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-scale.is-visible,
+.sr-scale[data-open="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.sr-slide-left,
+.sr-slide-right {
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.sr-slide-left {
+  transform: translateX(-100%);
+}
+.sr-slide-right {
+  transform: translateX(100%);
+}
+.sr-slide-left[data-open="true"],
+.sr-slide-right[data-open="true"] {
+  transform: translateX(0);
+}
+
+/* Scroll reveal: default hidden state for [data-reveal]. */
+.sr-reveal,
+[data-reveal]:not([data-reveal="off"]) {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-reveal.is-visible,
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Drawer + overlay pair (replaces framer-motion AnimatePresence). */
+.sr-drawer {
+  transform: translateX(-100%);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.sr-drawer[data-open="true"] {
+  transform: translateX(0);
+}
+.sr-drawer[data-side="right"] {
+  transform: translateX(100%);
+}
+.sr-drawer[data-side="right"][data-open="true"] {
+  transform: translateX(0);
+}
+
+.sr-overlay {
+  opacity: 0;
+  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.sr-overlay[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Stagger helper: parent sets --sr-stagger (e.g. 60ms). */
+[data-stagger] > * {
+  transition-delay: calc(var(--sr-index, 0) * var(--sr-stagger, 60ms));
+}
+
+/* Reduced motion: everything appears instantly, no slide. */
+@media (prefers-reduced-motion: reduce) {
+  .sr-fade,
+  .sr-fade-up,
+  .sr-scale,
+  .sr-reveal,
+  [data-reveal]:not([data-reveal="off"]) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .sr-slide-left,
+  .sr-slide-right,
+  .sr-drawer {
+    transition: none !important;
+  }
+  .sr-slide-left[data-open="true"],
+  .sr-slide-right[data-open="true"],
+  .sr-drawer[data-open="true"] {
+    transform: none !important;
+  }
+}
+
+/* No-JS fallback: never trap content invisible. */
+noscript [data-reveal],
+noscript .sr-reveal,
+noscript .sr-fade,
+noscript .sr-fade-up,
+noscript .sr-scale {
+  opacity: 1 !important;
+  transform: none !important;
+}
