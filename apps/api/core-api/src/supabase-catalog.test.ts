@@ -74,6 +74,18 @@ describe("supabase catalog source", () => {
     expect(second.calls).toContainEqual({ op: "gt", arg: ["sku", "B-002"] });
   });
 
+  it("accepts numeric NUMERIC prices from PostgREST", async () => {
+    const numeric = fakeClient([{ ...ROW, unit_price: 35000 }]);
+    const source = createSupabaseCatalogSource({
+      client: numeric.client as never,
+    });
+    const page = await source.listItems({ limit: 2, cursor: null });
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0]).toMatchObject({
+      price: { amount_minor: 3_500_000, currency: "USD" },
+    });
+  });
+
   it("drops corrupt rows and surfaces read errors", async () => {
     const bad = fakeClient([
       { ...ROW, unit_price: "10.001" },

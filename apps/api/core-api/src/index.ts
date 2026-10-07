@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import { config as loadDotenv } from "dotenv";
 import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
 import {
@@ -14,6 +16,9 @@ function notWired(name: string): Promise<never> {
 }
 
 async function main(): Promise<void> {
+  // Package-local .env for local dev only (gitignored). Real process
+  // env always wins, so CI/production are unaffected.
+  loadDotenv({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
   const config = loadConfig(process.env);
   const server = buildServer();
   // Catalog reads: live Supabase when credentials are present,
