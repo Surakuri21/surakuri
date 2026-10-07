@@ -10,6 +10,8 @@ import { liveSupabaseSource } from "./supabase-catalog.js";
 import { registerReservationRoutes } from "./reservations.js";
 import { createMemoryStore } from "@surakuri/reservation";
 import { registerCartRoutes } from "./cart.js";
+import { createDevOrderDeps, registerOrderRoutes } from "./orders.js";
+import type { OutboxEnvelope } from "@surakuri/worker";
 
 function notWired(name: string): Promise<never> {
   return Promise.reject(new Error(`${name} not wired (pending IMS read path)`));
@@ -35,13 +37,24 @@ async function main(): Promise<void> {
   );
   // Dev-only single-process store: lost on restart, uncoordinated across
   // instances. Production uses Postgres (guard logic is unchanged).
+  const holdStore = createMemoryStore();
   registerReservationRoutes(server, {
-    store: createMemoryStore(),
+    store: holdStore,
     availabilityForSlug: () => notWired("availability"),
   });
   registerCartRoutes(server, {
     priceFor: () => notWired("pricing"),
   });
+  // Dev outbox sink: accumulates published envelopes in memory so the
+  // order → event path executes end to end. Production persists them
+  // in audit.outbox inside the order transaction (worker delivers).
+  const outbox: OutboxEnvelope[] = [];
+  registerOrderRoutes(
+    server,
+    createDevOrderDeps(holdStore, (event) => {
+      outbox.push(event);
+    }),
+  );
   try {
     await server.listen({ port: config.PORT, host: config.HOST });
   } catch (error) {

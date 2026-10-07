@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cancelReservation,
+  commitReservation,
   createMemoryStore,
   heartbeat,
   reserve,
@@ -82,5 +83,27 @@ describe("reservation holds", () => {
     const first = reserve(store, hold("k1", 1), 1, T0);
     expect(cancelReservation(store, first.id, T0).state).toBe("cancelled");
     expect(reserve(store, hold("k2", 1), 1, T0).state).toBe("active");
+  });
+
+  it("commits live holds permanently out of the pool", () => {
+    const store = createMemoryStore();
+    const first = reserve(store, hold("k1", 1), 1, T0);
+    expect(commitReservation(store, first.id, T0).state).toBe("committed");
+    // The committed hold is settled: heartbeat, cancel, and re-commit
+    // all refuse it, and the sweeper leaves it alone.
+    expect(() => heartbeat(store, first.id, T0)).toThrowError(
+      expect.objectContaining({ code: "already-settled" }),
+    );
+    expect(() => cancelReservation(store, first.id, T0)).toThrowError(
+      expect.objectContaining({ code: "already-settled" }),
+    );
+    expect(() => commitReservation(store, first.id, T0)).toThrowError(
+      expect.objectContaining({ code: "already-settled" }),
+    );
+    expect(sweep(store, new Date(T0.getTime() + 60 * 60_000))).toBe(0);
+    // Once the IMS reflects the sale, no fresh hold can take the unit.
+    expect(() => reserve(store, hold("k2", 1), 0, T0)).toThrowError(
+      expect.objectContaining({ code: "insufficient-stock" }),
+    );
   });
 });

@@ -205,9 +205,15 @@ importers:
       '@surakuri/ims-adapter':
         specifier: workspace:*
         version: link:../ims-adapter
+      '@surakuri/order':
+        specifier: workspace:*
+        version: link:../../../packages/order
       '@surakuri/reservation':
         specifier: workspace:*
         version: link:../../../packages/reservation
+      '@surakuri/worker':
+        specifier: workspace:*
+        version: link:../worker
       dotenv:
         specifier: ^16.0.0
         version: 16.6.1
@@ -363,6 +369,25 @@ importers:
         specifier: workspace:*
         version: link:../design-tokens
     devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.5)(lightningcss@1.32.0)
+
+  packages/order:
+    dependencies:
+      '@surakuri/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.5
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

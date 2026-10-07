@@ -170,6 +170,22 @@ export function cancelReservation(
   return updated;
 }
 
+/**
+ * Consumes a live hold into an order. The hold leaves the
+ * availability pool permanently — it can never be re-held,
+ * re-committed, or swept afterwards.
+ */
+export function commitReservation(
+  store: ReservationStore,
+  id: string,
+  now: Date,
+): ReservationRecord {
+  const record = requireLive(store, id, now.toISOString());
+  const updated: ReservationRecord = { ...record, state: "committed" };
+  store.update(updated);
+  return updated;
+}
+
 /** Expires overdue holds. Returns the number expired. */
 export function sweep(store: ReservationStore, now: Date): number {
   let expired = 0;
