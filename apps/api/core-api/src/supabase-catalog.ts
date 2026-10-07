@@ -19,12 +19,18 @@ import { shapeCatalogItem } from "@surakuri/catalog";
 import type { CatalogItem, CatalogListResponse } from "@surakuri/catalog";
 import { CatalogListResponseSchema } from "@surakuri/catalog";
 
-/** Mirror row subset needed for the catalog projection. */
-const MirrorRowSchema: z.ZodType<ImsProductRow> = z.object({
+/**
+ * Mirror row subset needed for the catalog projection.
+ * PostgREST returns NUMERIC as JSON numbers, so `unit_price`
+ * arrives as a number; it is normalized to a DECIMAL string
+ * before shaping (exact for DECIMAL(10,2) magnitudes — never
+ * a float computation, only a change of notation).
+ */
+const MirrorRowSchema = z.object({
   mysql_id: z.number().int(),
   sku: z.string().min(1),
   name: z.string().min(1),
-  unit_price: z.string(),
+  unit_price: z.union([z.string(), z.number()]).transform((value) => String(value)),
   quantity: z.number().int(),
   category_name: z.string().nullable(),
   supplier_name: z.string().nullable(),
