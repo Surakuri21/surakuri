@@ -4,6 +4,7 @@ export {
   ReservationError,
   ReservationRecordSchema,
   cancelReservation,
+  commitReservation,
   heartbeat,
   reserve,
   sweep,
