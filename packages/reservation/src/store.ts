@@ -13,23 +13,29 @@ export function createMemoryStore(): ReservationStore {
   const byId = new Map<string, ReservationRecord>();
   const byKey = new Map<string, ReservationRecord>();
   return {
-    findByKey: (key) => byKey.get(key),
-    getById: (id) => byId.get(id),
+    findByKey: (key) => Promise.resolve(byKey.get(key)),
+    getById: (id) => Promise.resolve(byId.get(id)),
     listActive: (nowIso) =>
-      [...byId.values()].filter(
-        (record) => record.state === "active" && record.expiresAt > nowIso,
+      Promise.resolve(
+        [...byId.values()].filter(
+          (record) => record.state === "active" && record.expiresAt > nowIso,
+        ),
       ),
     listAged: (nowIso) =>
-      [...byId.values()].filter(
-        (record) => record.state === "active" && record.expiresAt <= nowIso,
+      Promise.resolve(
+        [...byId.values()].filter(
+          (record) => record.state === "active" && record.expiresAt <= nowIso,
+        ),
       ),
     insert: (record) => {
       byId.set(record.id, record);
       byKey.set(record.idempotencyKey, record);
+      return Promise.resolve();
     },
     update: (record) => {
       byId.set(record.id, record);
       byKey.set(record.idempotencyKey, record);
+      return Promise.resolve();
     },
   };
 }

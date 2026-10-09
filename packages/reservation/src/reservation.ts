@@ -63,35 +63,35 @@ export interface HoldInput {
  * the serialized-unit partial-unique-index lands here later (ADR 0004).
  */
 export interface ReservationStore {
-  findByKey(idempotencyKey: string): ReservationRecord | undefined;
-  getById(id: string): ReservationRecord | undefined;
+  findByKey(idempotencyKey: string): Promise<ReservationRecord | undefined>;
+  getById(id: string): Promise<ReservationRecord | undefined>;
   /** Live holds: active state and not yet expired. Feeds the guard. */
-  listActive(nowIso: string): ReservationRecord[];
+  listActive(nowIso: string): Promise<ReservationRecord[]>;
   /** Overdue holds: still marked active but past expiry. Feeds the sweeper. */
-  listAged(nowIso: string): ReservationRecord[];
-  insert(record: ReservationRecord): void;
-  update(record: ReservationRecord): void;
+  listAged(nowIso: string): Promise<ReservationRecord[]>;
+  insert(record: ReservationRecord): Promise<void>;
+  update(record: ReservationRecord): Promise<void>;
 }
 
-function heldForSlug(
+async function heldForSlug(
   store: ReservationStore,
   slug: string,
   nowIso: string,
-): number {
-  return store
-    .listActive(nowIso)
+): Promise<number> {
+  const active = await store.listActive(nowIso);
+  return active
     .filter((record) => record.slug === slug)
     .reduce((total, record) => total + record.quantity, 0);
 }
 
-export function reserve(
+export async function reserve(
   store: ReservationStore,
   input: HoldInput,
   available: number,
   now: Date,
   ttlMinutes: number = DEFAULT_TTL_MINUTES,
-): ReservationRecord {
-  const existing = store.findByKey(input.idempotencyKey);
+): Promise<ReservationRecord> {
+  const existing = await store.findByKey(input.idempotencyKey);
   if (existing !== undefined) {
     if (
       existing.slug !== input.slug ||
@@ -106,7 +106,7 @@ export function reserve(
     return existing;
   }
   const nowIso = now.toISOString();
-  const free = available - heldForSlug(store, input.slug, nowIso);
+  const free = available - (await heldForSlug(store, input.slug, nowIso));
   if (input.quantity > free) {
     throw new ReservationError(
       "insufficient-stock",
@@ -124,49 +124,49 @@ export function reserve(
     expiresAt: new Date(now.getTime() + ttl * 60_000).toISOString(),
     createdAt: nowIso,
   });
-  store.insert(record);
+  await store.insert(record);
   return record;
 }
 
-function requireLive(
+async function requireLive(
   store: ReservationStore,
   id: string,
   nowIso: string,
-): ReservationRecord {
-  const record = store.getById(id);
+): Promise<ReservationRecord> {
+  const record = await store.getById(id);
   if (record === undefined) {
     throw new ReservationError("not-found", "Reservation does not exist.");
   }
   if (record.state !== "active" || record.expiresAt <= nowIso) {
     if (record.state === "active") {
-      store.update({ ...record, state: "expired" });
+      await store.update({ ...record, state: "expired" });
     }
     throw new ReservationError("already-settled", "Reservation is no longer active.");
   }
   return record;
 }
 
-export function heartbeat(store: ReservationStore, id: string, now: Date): ReservationRecord {
+export async function heartbeat(store: ReservationStore, id: string, now: Date): Promise<ReservationRecord> {
   const nowIso = now.toISOString();
-  const record = requireLive(store, id, nowIso);
+  const record = await requireLive(store, id, nowIso);
   const cap = Date.parse(record.createdAt) + MAX_TTL_MINUTES * 60_000;
   const extended = Math.min(now.getTime() + DEFAULT_TTL_MINUTES * 60_000, cap);
   const updated: ReservationRecord = {
     ...record,
     expiresAt: new Date(extended).toISOString(),
   };
-  store.update(updated);
+  await store.update(updated);
   return updated;
 }
 
-export function cancelReservation(
+export async function cancelReservation(
   store: ReservationStore,
   id: string,
   now: Date,
-): ReservationRecord {
-  const record = requireLive(store, id, now.toISOString());
+): Promise<ReservationRecord> {
+  const record = await requireLive(store, id, now.toISOString());
   const updated: ReservationRecord = { ...record, state: "cancelled" };
-  store.update(updated);
+  await store.update(updated);
   return updated;
 }
 
@@ -175,22 +175,22 @@ export function cancelReservation(
  * availability pool permanently — it can never be re-held,
  * re-committed, or swept afterwards.
  */
-export function commitReservation(
+export async function commitReservation(
   store: ReservationStore,
   id: string,
   now: Date,
-): ReservationRecord {
-  const record = requireLive(store, id, now.toISOString());
+): Promise<ReservationRecord> {
+  const record = await requireLive(store, id, now.toISOString());
   const updated: ReservationRecord = { ...record, state: "committed" };
-  store.update(updated);
+  await store.update(updated);
   return updated;
 }
 
 /** Expires overdue holds. Returns the number expired. */
-export function sweep(store: ReservationStore, now: Date): number {
+export async function sweep(store: ReservationStore, now: Date): Promise<number> {
   let expired = 0;
-  for (const record of store.listAged(now.toISOString())) {
-    store.update({ ...record, state: "expired" });
+  for (const record of await store.listAged(now.toISOString())) {
+    await store.update({ ...record, state: "expired" });
     expired += 1;
   }
   return expired;

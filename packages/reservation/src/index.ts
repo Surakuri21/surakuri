@@ -16,3 +16,4 @@ export type {
   ReservationStore,
 } from "./reservation.js";
 export { createMemoryStore } from "./store.js";
+export { createSupabaseReservationStore } from "./supabase.js";

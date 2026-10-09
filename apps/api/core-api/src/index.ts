@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { config as loadDotenv } from "dotenv";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
 import {
@@ -8,13 +9,29 @@ import {
 } from "./products.js";
 import { liveSupabaseSource } from "./supabase-catalog.js";
 import { registerReservationRoutes } from "./reservations.js";
-import { createMemoryStore } from "@surakuri/reservation";
+import {
+  createMemoryStore,
+  createSupabaseReservationStore,
+} from "@surakuri/reservation";
 import { registerCartRoutes } from "./cart.js";
 import { createDevOrderDeps, registerOrderRoutes } from "./orders.js";
-import type { OutboxEnvelope } from "@surakuri/worker";
+import {
+  createMemoryOrderStore,
+  createSupabaseOrderStore,
+} from "@surakuri/order";
+import {
+  createSupabaseOutboxSink,
+  type OutboxEnvelope,
+} from "@surakuri/worker";
 
 function notWired(name: string): Promise<never> {
   return Promise.reject(new Error(`${name} not wired (pending IMS read path)`));
+}
+
+function serviceClient(url: string, serviceRoleKey: string): SupabaseClient {
+  return createClient(url, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 async function main(): Promise<void> {
@@ -35,9 +52,18 @@ async function main(): Promise<void> {
         })
       : unavailableSource(),
   );
+  // Stores: memory by default. Set SURAKURI_USE_SUPABASE_STORES=1
+  // (with migrations 0003-0005 applied) to persist holds, orders,
+  // and outbox events in Supabase instead.
+  const supabase =
+    process.env["SURAKURI_USE_SUPABASE_STORES"] === "1" &&
+    serviceKey !== undefined
+      ? serviceClient(config.SUPABASE_URL, serviceKey)
+      : null;
   // Dev-only single-process store: lost on restart, uncoordinated across
   // instances. Production uses Postgres (guard logic is unchanged).
-  const holdStore = createMemoryStore();
+  const holdStore =
+    supabase === null ? createMemoryStore() : createSupabaseReservationStore(supabase);
   registerReservationRoutes(server, {
     store: holdStore,
     availabilityForSlug: () => notWired("availability"),
@@ -46,14 +72,23 @@ async function main(): Promise<void> {
     priceFor: () => notWired("pricing"),
   });
   // Dev outbox sink: accumulates published envelopes in memory so the
-  // order → event path executes end to end. Production persists them
-  // in audit.outbox inside the order transaction (worker delivers).
+  // order → event path executes end to end. With Supabase stores,
+  // events persist in outbox_events instead (worker delivers).
   const outbox: OutboxEnvelope[] = [];
   registerOrderRoutes(
     server,
-    createDevOrderDeps(holdStore, (event) => {
-      outbox.push(event);
-    }),
+    supabase === null
+      ? createDevOrderDeps(holdStore, (event) => {
+          outbox.push(event);
+          return Promise.resolve();
+        })
+      : {
+          orders: createSupabaseOrderStore(supabase),
+          holds: holdStore,
+          priceFor: () => notWired("pricing"),
+          publish: (event: OutboxEnvelope) =>
+            createSupabaseOutboxSink(supabase).publish(event),
+        },
   );
   try {
     await server.listen({ port: config.PORT, host: config.HOST });

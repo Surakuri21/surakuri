@@ -14,3 +14,4 @@ export type {
   OrderStore,
 } from "./order.js";
 export { createMemoryOrderStore } from "./store.js";
+export { createSupabaseOrderStore } from "./supabase.js";

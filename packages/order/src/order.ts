@@ -96,23 +96,23 @@ export interface CreateOrderInput {
 }
 
 export interface OrderStore {
-  findByKey(idempotencyKey: string): OrderRecord | undefined;
-  getById(id: string): OrderRecord | undefined;
-  listStalePending(nowIso: string): OrderRecord[];
-  insert(record: OrderRecord): void;
-  update(record: OrderRecord): void;
+  findByKey(idempotencyKey: string): Promise<OrderRecord | undefined>;
+  getById(id: string): Promise<OrderRecord | undefined>;
+  listStalePending(nowIso: string): Promise<OrderRecord[]>;
+  insert(record: OrderRecord): Promise<void>;
+  update(record: OrderRecord): Promise<void>;
 }
 
 function stamp(record: OrderRecord, nowIso: string): OrderRecord {
   return { ...record, updatedAt: nowIso };
 }
 
-export function createOrder(
+export async function createOrder(
   store: OrderStore,
   input: CreateOrderInput,
   now: Date,
-): OrderRecord {
-  const existing = store.findByKey(input.idempotencyKey);
+): Promise<OrderRecord> {
+  const existing = await store.findByKey(input.idempotencyKey);
   if (existing !== undefined) {
     const same =
       existing.customerId === input.customerId &&
@@ -150,18 +150,18 @@ export function createOrder(
     createdAt: nowIso,
     updatedAt: nowIso,
   });
-  store.insert(record);
+  await store.insert(record);
   return record;
 }
 
-export function transition(
+export async function transition(
   store: OrderStore,
   id: string,
   to: OrderState,
   now: Date,
   options: { readonly paymentRef?: string | undefined } = {},
-): OrderRecord {
-  const record = store.getById(id);
+): Promise<OrderRecord> {
+  const record = await store.getById(id);
   if (record === undefined) {
     throw new OrderError("not-found", "Order does not exist.");
   }
@@ -187,16 +187,16 @@ export function transition(
     },
     now.toISOString(),
   );
-  store.update(updated);
+  await store.update(updated);
   return updated;
 }
 
 /** Moves stale `pending_payment` orders to `expired`. Returns the count. */
-export function sweepOrders(store: OrderStore, now: Date, olderThanMinutes = 60): number {
+export async function sweepOrders(store: OrderStore, now: Date, olderThanMinutes = 60): Promise<number> {
   const cutoff = new Date(now.getTime() - olderThanMinutes * 60_000).toISOString();
   let expired = 0;
-  for (const record of store.listStalePending(cutoff)) {
-    store.update(stamp({ ...record, state: "expired" }, now.toISOString()));
+  for (const record of await store.listStalePending(cutoff)) {
+    await store.update(stamp({ ...record, state: "expired" }, now.toISOString()));
     expired += 1;
   }
   return expired;
