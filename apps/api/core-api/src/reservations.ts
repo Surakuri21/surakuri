@@ -83,7 +83,7 @@ export function registerReservationRoutes(
       }
       try {
         held.push(
-          reserve(
+          await reserve(
             deps.store,
             {
               customerId: body.customerId,
@@ -107,7 +107,7 @@ export function registerReservationRoutes(
   server.post("/v1/reservations/heartbeat", async (request, reply) => {
     const body = validate(IdBodySchema, request.body);
     try {
-      const record = heartbeat(deps.store, body.id, now());
+      const record = await heartbeat(deps.store, body.id, now());
       reply.send(ReservationRecordSchema.parse(record));
     } catch (error) {
       throw toProblem(error);
@@ -117,7 +117,7 @@ export function registerReservationRoutes(
   server.post("/v1/reservations/cancel", async (request, reply) => {
     const body = validate(IdBodySchema, request.body);
     try {
-      const record = cancelReservation(deps.store, body.id, now());
+      const record = await cancelReservation(deps.store, body.id, now());
       reply.send(ReservationRecordSchema.parse(record));
     } catch (error) {
       throw toProblem(error);
@@ -125,6 +125,6 @@ export function registerReservationRoutes(
   });
 
   server.post("/v1/reservations/sweep", async (_request, reply) => {
-    reply.send({ expired: sweep(deps.store, now()) });
+    reply.send({ expired: await sweep(deps.store, now()) });
   });
 }

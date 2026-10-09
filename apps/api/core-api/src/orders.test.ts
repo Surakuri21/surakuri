@@ -9,9 +9,9 @@ import { registerOrderRoutes } from "./orders.js";
 const CUSTOMER = "0195a0b0-0000-7000-8000-000000000001";
 const T0 = new Date("2026-10-07T12:00:00Z");
 
-function setup(priceMinor = 1_250_000) {
+async function setup(priceMinor = 1_250_000) {
   const holds = createMemoryStore();
-  const hold = reserve(
+  const hold = await reserve(
     holds,
     { customerId: CUSTOMER, slug: "daytona", quantity: 1, idempotencyKey: "h1" },
     5,
@@ -29,13 +29,14 @@ function setup(priceMinor = 1_250_000) {
 describe("order routes", () => {
   it("creates orders from live holds and publishes order.placed", async () => {
     const server = buildServer();
-    const { holds, hold, events, priceFor } = setup();
+    const { holds, hold, events, priceFor } = await setup();
     registerOrderRoutes(server, {
       orders: createMemoryOrderStore(),
       holds,
       priceFor,
       publish: (event) => {
         events.push(event);
+        return Promise.resolve();
       },
       clock: () => T0,
     });
@@ -69,13 +70,14 @@ describe("order routes", () => {
 
   it("reads and cancels orders", async () => {
     const server = buildServer();
-    const { holds, hold, events, priceFor } = setup();
+    const { holds, hold, events, priceFor } = await setup();
     registerOrderRoutes(server, {
       orders: createMemoryOrderStore(),
       holds,
       priceFor,
       publish: (event) => {
         events.push(event);
+        return Promise.resolve();
       },
       clock: () => T0,
     });

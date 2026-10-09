@@ -36,13 +36,13 @@ export interface OrderDeps {
   readonly orders: OrderStore;
   readonly holds: ReservationStore;
   readonly priceFor: (slug: string) => Promise<ServerPrice | undefined>;
-  readonly publish: (event: OutboxEnvelope) => void;
+  readonly publish: (event: OutboxEnvelope) => Promise<void>;
   readonly clock?: (() => Date) | undefined;
 }
 
 export function createDevOrderDeps(
   holds: ReservationStore,
-  publish: (event: OutboxEnvelope) => void,
+  publish: (event: OutboxEnvelope) => Promise<void>,
 ): OrderDeps {
   return {
     orders: createMemoryOrderStore(),
@@ -109,7 +109,7 @@ export function registerOrderRoutes(
 
   server.post("/v1/orders", async (request, reply) => {
     const body = validate(CreateOrderBodySchema, request.body);
-    const hold = deps.holds.getById(body.reservationId);
+    const hold = await deps.holds.getById(body.reservationId);
     if (hold === undefined) {
       throw new ProblemError(404, "Reservation not found", {
         code: "reservation-not-found",
@@ -130,7 +130,7 @@ export function registerOrderRoutes(
       });
     }
     try {
-      const created = createOrder(
+      const created = await createOrder(
         deps.orders,
         {
           customerId: body.customerId,
@@ -147,13 +147,13 @@ export function registerOrderRoutes(
         },
         now(),
       );
-      const committed = commitReservation(deps.holds, hold.id, now());
+      const committed = await commitReservation(deps.holds, hold.id, now());
       if (committed.state !== "committed") {
         throw new ProblemError(409, "Hold no longer available", {
           code: "hold-unavailable",
         });
       }
-      const pending = transition(
+      const pending = await transition(
         deps.orders,
         created.id,
         "pending_payment",
@@ -169,7 +169,7 @@ export function registerOrderRoutes(
           currency: pending.currency,
         },
       });
-      deps.publish(event);
+      await deps.publish(event);
       reply
         .code(201)
         .send(OrderResponseSchema.parse({ order: pending, eventId: event.eventId }));
@@ -180,7 +180,7 @@ export function registerOrderRoutes(
 
   server.get("/v1/orders/:id", async (request, reply) => {
     const params = validate(z.object({ id: IdSchema }), request.params);
-    const order = deps.orders.getById(params.id);
+    const order = await deps.orders.getById(params.id);
     if (order === undefined) {
       throw new ProblemError(404, "Order not found", {
         code: "order-not-found",
@@ -192,7 +192,7 @@ export function registerOrderRoutes(
   server.post("/v1/orders/:id/cancel", async (request, reply) => {
     const params = validate(z.object({ id: IdSchema }), request.params);
     try {
-      const order = transition(deps.orders, params.id, "cancelled", now());
+      const order = await transition(deps.orders, params.id, "cancelled", now());
       reply.send(OrderRecordSchema.parse(order));
     } catch (error) {
       throw toProblem(error);
